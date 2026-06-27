@@ -1,3 +1,36 @@
+/**
+ * Hono adapter for ampulla — `@Controller`, route decorators, extractors, and middleware.
+ *
+ * Wire a container into a Hono app with `registerControllers`. Use `@Extract` to
+ * pull typed values out of the request instead of working with the raw `Context`.
+ *
+ * @example
+ * ```ts
+ * import { Hono } from "hono";
+ * import { Container, Module, Injectable } from "@ukstv/ampulla";
+ * import { Controller, Get, Extract, query, registerControllers } from "@ukstv/ampulla/hono";
+ *
+ * @Controller("search")
+ * @Injectable()
+ * class SearchController {
+ *   @Extract({ q: query("q") })
+ *   @Get()
+ *   search(params: { q: string | undefined }) {
+ *     return new Response(params.q ?? "");
+ *   }
+ * }
+ *
+ * @Module({ providers: [SearchController] })
+ * class AppModule {}
+ *
+ * const app = new Hono();
+ * const container = await Container.create(AppModule);
+ * registerControllers(app, container);
+ * export default app;
+ * ```
+ *
+ * @module hono
+ */
 import type { Context, Handler, Hono, MiddlewareHandler } from "hono";
 import type { ParseBodyOptions, BodyData } from "hono/utils/body";
 import type { Container } from "../container.js";

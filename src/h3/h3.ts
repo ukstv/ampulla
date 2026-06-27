@@ -1,3 +1,36 @@
+/**
+ * H3 adapter for ampulla — `@Controller`, route decorators, extractors, and middleware.
+ *
+ * Wire a container into an H3 app with `registerControllers`. Use `@Extract` to
+ * pull typed values out of the request instead of working with the raw `H3Event`.
+ *
+ * @example
+ * ```ts
+ * import { H3 } from "h3";
+ * import { Container, Module, Injectable } from "@ukstv/ampulla";
+ * import { Controller, Get, Extract, query, registerControllers } from "@ukstv/ampulla/h3";
+ *
+ * @Controller("search")
+ * @Injectable()
+ * class SearchController {
+ *   @Extract({ q: query("q") })
+ *   @Get()
+ *   search(params: { q: string | undefined }) {
+ *     return new Response(params.q ?? "");
+ *   }
+ * }
+ *
+ * @Module({ providers: [SearchController] })
+ * class AppModule {}
+ *
+ * const app = new H3();
+ * const container = await Container.create(AppModule);
+ * registerControllers(app, container);
+ * export default app;
+ * ```
+ *
+ * @module h3
+ */
 import type { H3, H3Event, Middleware as H3Middleware, HTTPMethod } from "h3";
 import type { ClassDecoratorFn, ClassMethodDecoratorFn } from "../types.js";
 import type { Container } from "../container.js";

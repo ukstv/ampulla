@@ -1,3 +1,29 @@
+/**
+ * Tag-based grouping for container providers.
+ *
+ * Use `tag()` to create an opaque tag, `@Tagged()` to attach it to a class,
+ * and `allTagged()` to retrieve all instances sharing a tag from a container.
+ *
+ * @example
+ * ```ts
+ * import { tag, Tagged, allTagged } from "@ukstv/ampulla/tag";
+ * import { Injectable, Module, Container } from "@ukstv/ampulla";
+ *
+ * const HANDLER = tag<{ handle(): void }>("handler");
+ *
+ * @Tagged(HANDLER)
+ * @Injectable()
+ * class FooHandler { handle() { console.log("foo"); } }
+ *
+ * @Module({ providers: [FooHandler] })
+ * class AppModule {}
+ *
+ * const container = await Container.create(AppModule);
+ * const handlers = allTagged(container, HANDLER); // [FooHandler instance]
+ * ```
+ *
+ * @module tag
+ */
 import type { ClassDecoratorFn } from "./types.js";
 
 export type { Tag };

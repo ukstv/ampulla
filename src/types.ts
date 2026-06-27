@@ -1,3 +1,10 @@
+/**
+ * Shared low-level TypeScript utility types used across ampulla's public API.
+ *
+ * Import these when building extensions or custom decorators on top of ampulla.
+ *
+ * @module types
+ */
 export type { ClassDecoratorFn, ClassMethodDecoratorFn, Ctor, ConcreteCtor };
 
 /** Any class constructor, including abstract ones. Used as a dependency token when the class itself is the thing to inject. */
