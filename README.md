@@ -56,17 +56,9 @@ Ampulla has no runtime dependencies. The Hono and H3 adapters reference their re
 
 ## Installation
 
-Ampulla is published to both **npm** and **JSR**:
-
 ```sh
-# npm / pnpm / yarn
-npm install ampulla
-pnpm add ampulla
-yarn add ampulla
-
-# JSR (Deno, or any package manager that supports JSR)
-deno add jsr:@ukstv/ampulla
-npx jsr add @ukstv/ampulla
+npm install ampulla # for NPM
+pnpm add ampulla # for PNPM
 ```
 
 Ampulla requires **TypeScript 5.2+**. No `experimentalDecorators`, no `reflect-metadata`, no Babel transforms needed.
