@@ -1,6 +1,6 @@
 {
   "name": "@ukstv/ampulla",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "unstable": ["sloppy-imports"],
   "license": "MIT",
   "compilerOptions": {
