@@ -1,13 +1,13 @@
-import {
-  type H3,
-  type H3Event,
-  type Middleware as H3Middleware,
-  type HTTPMethod,
-} from "h3";
+import type { H3, H3Event, Middleware as H3Middleware, HTTPMethod } from "h3";
+import type { ClassMethodDecoratorFn } from "../types.js";
 import type { Container } from "../container.js";
 import type { InjectionToken } from "../injectable.js";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import { ValidationError, ExtractionError, InvalidHandlerError } from "../http-errors.js";
+import {
+  ValidationError,
+  ExtractionError,
+  InvalidHandlerError,
+} from "../http-errors.js";
 
 // Decorators
 export {
@@ -39,8 +39,12 @@ export {
 };
 
 // Registration & errors
-export { registerControllers, InvalidHandlerError, ExtractionError, ValidationError };
-
+export {
+  registerControllers,
+  InvalidHandlerError,
+  ExtractionError,
+  ValidationError,
+};
 
 const K_ROUTE: unique symbol = Symbol("ampulla:h3:route");
 const K_CONTROLLER_META: unique symbol = Symbol("ampulla:h3:controller");
@@ -87,7 +91,9 @@ function makeExtractor<E, T>(fn: (e: E) => T | Promise<T>): Extractor<E, T> {
     makeExtractor(async (e) => {
       const result = await schema["~standard"].validate(await fn(e));
       if (result.issues)
-        throw new ValidationError(result.issues.map((i) => i.message).join("; "));
+        throw new ValidationError(
+          result.issues.map((i) => i.message).join("; "),
+        );
       return result.value;
     });
   return ext;
@@ -165,7 +171,7 @@ type ExtractorSpec = ExtractorFn | Record<string, ExtractorFn>;
  *   @Extract(query("q"))                        // single extractor → single arg
  *   @Extract({ id: param("id"), q: query("q") }) // Record → single object arg
  */
-function Extract(spec: ExtractorSpec) {
+function Extract(spec: ExtractorSpec): ClassMethodDecoratorFn {
   return function (
     value: Function,
     _context: ClassMethodDecoratorContext,
