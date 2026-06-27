@@ -37,6 +37,11 @@
       "types": "./dist/h3/h3.d.ts",
       "import": "./dist/h3/h3.js",
       "default": "./dist/h3/h3.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js",
+      "default": "./dist/types.js"
     }
   },
   "files": [

@@ -308,19 +308,10 @@ type MiddlewareToken = MiddlewareCtor | InjectionToken<MiddlewareClass>;
  * \@Get("resource")
  * getResource(c: Context) { ... }
  */
-function UseMiddleware(fn: MiddlewareHandler | MiddlewareToken) {
-  function applyUseMiddleware(
-    value: Function,
-    context: ClassMethodDecoratorContext,
-  ): void;
-  function applyUseMiddleware(
-    value: abstract new (...args: any[]) => any,
-    context: ClassDecoratorContext,
-  ): void;
-  function applyUseMiddleware(
-    value: any,
-    _context: ClassMethodDecoratorContext | ClassDecoratorContext,
-  ): void {
+function UseMiddleware(
+  fn: MiddlewareHandler | MiddlewareToken,
+): ClassDecoratorFn & ClassMethodDecoratorFn {
+  function applyUseMiddleware(value: any, _context: any): void {
     const existing: (MiddlewareHandler | MiddlewareToken)[] =
       (value as any)[K_MIDDLEWARE] ?? [];
     Object.defineProperty(value, K_MIDDLEWARE, {
@@ -330,7 +321,7 @@ function UseMiddleware(fn: MiddlewareHandler | MiddlewareToken) {
       writable: false,
     });
   }
-  return applyUseMiddleware;
+  return applyUseMiddleware as ClassDecoratorFn & ClassMethodDecoratorFn;
 }
 
 // ---------------------------------------------------------------------------
@@ -349,7 +340,10 @@ function UseMiddleware(fn: MiddlewareHandler | MiddlewareToken) {
  * \@Get(":id")
  * getOne(c: Context) { ... }
  */
-function Header(name: string, value: string) {
+function Header(
+  name: string,
+  value: string,
+): ClassDecoratorFn & ClassMethodDecoratorFn {
   return UseMiddleware(async (c, next) => {
     c.header(name, value);
     await next();
@@ -360,11 +354,8 @@ function Header(name: string, value: string) {
 // HTTP method decorators
 // ---------------------------------------------------------------------------
 
-function routeDecorator(method: string, path: string) {
-  return function (
-    value: Function,
-    _context: ClassMethodDecoratorContext,
-  ): void {
+function routeDecorator(method: string, path: string): ClassMethodDecoratorFn {
+  return function (value: any, _context: ClassMethodDecoratorContext): void {
     Object.defineProperty(value, K_ROUTE, {
       value: { method, path },
       enumerable: false,
@@ -384,32 +375,32 @@ function routeDecorator(method: string, path: string) {
  * Omitting the argument (or passing `""`) registers the route at the controller
  * prefix itself with no extra segment.
  */
-function Get(path = "") {
+function Get(path = ""): ClassMethodDecoratorFn {
   return routeDecorator("GET", path);
 }
 
 /** Marks a method as the handler for HTTP POST requests at the given path segment, joined with the `@Controller` prefix. */
-function Post(path = "") {
+function Post(path = ""): ClassMethodDecoratorFn {
   return routeDecorator("POST", path);
 }
 
 /** Marks a method as the handler for HTTP PUT requests at the given path segment, joined with the `@Controller` prefix. */
-function Put(path = "") {
+function Put(path = ""): ClassMethodDecoratorFn {
   return routeDecorator("PUT", path);
 }
 
 /** Marks a method as the handler for HTTP PATCH requests at the given path segment, joined with the `@Controller` prefix. */
-function Patch(path = "") {
+function Patch(path = ""): ClassMethodDecoratorFn {
   return routeDecorator("PATCH", path);
 }
 
 /** Marks a method as the handler for HTTP DELETE requests at the given path segment, joined with the `@Controller` prefix. */
-function Delete(path = "") {
+function Delete(path = ""): ClassMethodDecoratorFn {
   return routeDecorator("DELETE", path);
 }
 
 /** Marks a method as the handler for HTTP QUERY requests (RFC 10008) at the given path segment, joined with the `@Controller` prefix. */
-function Query(path = "") {
+function Query(path = ""): ClassMethodDecoratorFn {
   return routeDecorator("QUERY", path);
 }
 
@@ -432,11 +423,8 @@ function Query(path = "") {
  * prototype. Decorator execution order: method decorators run first, then
  * class decorators bottom-to-top.
  */
-function Controller(prefix = "") {
-  return function (
-    value: abstract new (...args: any[]) => any,
-    _context: ClassDecoratorContext,
-  ): void {
+function Controller(prefix = ""): ClassDecoratorFn {
+  return function (value): void {
     const routes: RouteEntry[] = [];
     for (const key of Object.getOwnPropertyNames(value.prototype)) {
       const fn = value.prototype[key];
