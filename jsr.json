@@ -1,0 +1,11 @@
+{
+  "name": "@ukstv/ampulla",
+  "version": "0.0.2",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tag": "./src/tag.ts",
+    "./hono": "./src/hono/hono.ts",
+    "./h3": "./src/h3/h3.ts",
+    "./types": "./src/types.ts"
+  }
+}
