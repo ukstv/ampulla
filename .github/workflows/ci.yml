@@ -37,4 +37,4 @@ jobs:
           cache: true
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
-      - run: npm stage publish --provenance --access public
+      - run: pnpm stage publish --provenance --access public
