@@ -64,6 +64,14 @@
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
+  "peerDependencies": {
+    "hono": ">=4",
+    "h3": ">=2"
+  },
+  "peerDependenciesMeta": {
+    "hono": { "optional": true },
+    "h3": { "optional": true }
+  },
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^8.0.2",
     "@rolldown/plugin-babel": "^0.2.3",
