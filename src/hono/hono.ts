@@ -344,7 +344,7 @@ function Header(
   name: string,
   value: string,
 ): ClassDecoratorFn & ClassMethodDecoratorFn {
-  return UseMiddleware(async (c, next) => {
+  return UseMiddleware(async (c: Context, next: () => Promise<void>) => {
     c.header(name, value);
     await next();
   });
@@ -424,7 +424,7 @@ function Query(path = ""): ClassMethodDecoratorFn {
  * class decorators bottom-to-top.
  */
 function Controller(prefix = ""): ClassDecoratorFn {
-  return function (value): void {
+  return function (value: abstract new (...args: any[]) => any): void {
     const routes: RouteEntry[] = [];
     for (const key of Object.getOwnPropertyNames(value.prototype)) {
       const fn = value.prototype[key];

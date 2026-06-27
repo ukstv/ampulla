@@ -1,5 +1,6 @@
 {
   "name": "@ukstv/ampulla",
+  "unstable": ["sloppy-imports"],
   "exports": {
     ".": "./src/index.ts",
     "./tag": "./src/tag.ts",

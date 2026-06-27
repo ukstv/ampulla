@@ -46,7 +46,7 @@ function tag<T = object>(label: string | symbol): Tag<T> {
  * separately.
  */
 function Tagged(...tags: readonly Tag<any>[]): ClassDecoratorFn {
-  return function (value): void {
+  return function (value: abstract new (...args: any[]) => any): void {
     Object.defineProperty(value, K_TAGS, {
       value: tags,
       enumerable: false,

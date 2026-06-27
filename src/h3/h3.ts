@@ -284,7 +284,7 @@ function Header(
   name: string,
   value: string,
 ): ClassDecoratorFn & ClassMethodDecoratorFn {
-  return UseMiddleware(async (event, next) => {
+  return UseMiddleware(async (event: H3Event, next: Parameters<H3Middleware>[1]) => {
     event.res.headers.set(name, value);
     return next();
   });
@@ -295,7 +295,7 @@ function Header(
 // ---------------------------------------------------------------------------
 
 function routeDecorator(method: string, path: string): ClassMethodDecoratorFn {
-  return function (value): void {
+  return function (value: (...args: any[]) => any): void {
     Object.defineProperty(value, K_ROUTE, {
       value: { method, path },
       enumerable: false,
@@ -336,7 +336,7 @@ function Delete(path = ""): ClassMethodDecoratorFn {
  * Must be applied after `@Injectable` and the HTTP-method decorators.
  */
 function Controller(prefix = ""): ClassDecoratorFn {
-  return function (value): void {
+  return function (value: abstract new (...args: any[]) => any): void {
     const routes: RouteEntry[] = [];
     for (const key of Object.getOwnPropertyNames(value.prototype)) {
       const fn = value.prototype[key];
