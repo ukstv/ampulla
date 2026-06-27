@@ -3,7 +3,12 @@ import type { ParseBodyOptions, BodyData } from "hono/utils/body";
 import type { Container } from "../container.js";
 import type { InjectionToken } from "../injectable.js";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import { ValidationError, ExtractionError, InvalidHandlerError } from "../http-errors.js";
+import {
+  ValidationError,
+  ExtractionError,
+  InvalidHandlerError,
+} from "../http-errors.js";
+import { ClassDecoratorFn, ClassMethodDecoratorFn } from "../types.js";
 
 // Decorators
 export {
@@ -48,7 +53,6 @@ export {
   K_EXTRACT,
   K_CONTROLLER_META,
 };
-
 
 const K_ROUTE: unique symbol = Symbol("ampulla:hono:route");
 const K_CONTROLLER_META: unique symbol = Symbol("ampulla:hono:controller");
@@ -95,7 +99,9 @@ function makeExtractor<C, T>(fn: (c: C) => T | Promise<T>): Extractor<C, T> {
     makeExtractor(async (c) => {
       const result = await schema["~standard"].validate(await fn(c));
       if (result.issues)
-        throw new ValidationError(result.issues.map((i) => i.message).join("; "));
+        throw new ValidationError(
+          result.issues.map((i) => i.message).join("; "),
+        );
       return result.value;
     });
   return ext;
@@ -220,7 +226,7 @@ type ExtractorSpec = ExtractorFn | Record<string, ExtractorFn>;
  * NOTE: stacking multiple `@Extract` on the same method is not yet
  * supported — composition order is unresolved. Revisit.
  */
-function Extract(spec: ExtractorSpec) {
+function Extract(spec: ExtractorSpec): ClassMethodDecoratorFn {
   return function (
     value: Function,
     _context: ClassMethodDecoratorContext,

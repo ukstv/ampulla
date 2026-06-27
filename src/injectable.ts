@@ -1,6 +1,6 @@
+import type { ClassDecoratorFn, Ctor } from "./types.js";
+
 export type {
-  Ctor,
-  ConcreteCtor,
   InjectionToken,
   DependencyToken,
   OptionalToken,
@@ -9,23 +9,8 @@ export type {
   TokenValues,
   TokenValue,
   InjectableClass,
-  ClassDecoratorFn,
 };
 export { injection, optional, isOptionalToken, Injectable, getInjectableDeps };
-
-/** Any class constructor, including abstract ones. Used as a dependency token when the class itself is the thing to inject. */
-type Ctor<T = unknown> = abstract new (...args: any[]) => T;
-
-/** A concrete (non-abstract) class constructor. Used as the implementation side of `useClass` and as the target for `new` during provider instantiation. */
-type ConcreteCtor<T = unknown> = new (...args: any[]) => T;
-
-/** The function signature for a standard JavaScript class decorator that constrains the decorated class to extend `T`. */
-type ClassDecoratorFn<T extends abstract new (...args: any) => any> = <
-  TClass extends T,
->(
-  value: TClass,
-  context: ClassDecoratorContext<TClass>,
-) => void;
 
 /**
  * An opaque token used to identify a dependency in the container.
@@ -63,7 +48,10 @@ const K_OPTIONAL: unique symbol = Symbol("ampulla:optional");
  *   constructor(private logger: Logger, private config?: AppConfig) {}
  * }
  */
-type OptionalToken<T> = { readonly [K_OPTIONAL]: true; readonly token: DependencyToken<T> };
+type OptionalToken<T> = {
+  readonly [K_OPTIONAL]: true;
+  readonly token: DependencyToken<T>;
+};
 
 /** A value accepted in an `@Injectable` deps list or a `useFactory` inject array: either a required token or an `optional()`-wrapped token. */
 type DepArg<T = unknown> = DependencyToken<T> | OptionalToken<T>;
@@ -73,10 +61,13 @@ type AnyDepArg = DepArg<any>;
 
 /** Maps a single `DepArg` to the type it resolves to. Optional tokens resolve to `T | undefined`. */
 type TokenValue<T> =
-  T extends Ctor<infer V> ? V :
-  T extends InjectionToken<infer V> ? V :
-  T extends OptionalToken<infer V> ? V | undefined :
-  never;
+  T extends Ctor<infer V>
+    ? V
+    : T extends InjectionToken<infer V>
+      ? V
+      : T extends OptionalToken<infer V>
+        ? V | undefined
+        : never;
 
 /** Maps a tuple of `DepArg`s to the tuple of types they resolve to. Used to type-check `@Injectable` arguments against constructor parameters. */
 type TokenValues<TTokens extends readonly DepArg[]> = {

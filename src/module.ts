@@ -1,11 +1,5 @@
-import {
-  ClassDecoratorFn,
-  ConcreteCtor,
-  Ctor,
-  DependencyToken,
-  AnyDepArg,
-  TokenValues,
-} from "./injectable.js";
+import type { ClassDecoratorFn, ConcreteCtor, Ctor } from "./types.js";
+import type { DependencyToken, AnyDepArg, TokenValues } from "./injectable.js";
 import { NotAModuleError } from "./errors.js";
 
 export type { AnyDependencyToken, AnyProvider, ModuleClass };

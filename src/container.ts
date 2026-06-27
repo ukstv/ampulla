@@ -1,11 +1,9 @@
 import "./symbol-dispose.js";
-import {
-  AnyDependencyToken,
-  getModuleMetadata,
-  ModuleClass,
-  AnyProvider,
-} from "./module.js";
-import { ConcreteCtor, getInjectableDeps, isOptionalToken, AnyDepArg, TokenValue } from "./injectable.js";
+import type { AnyDependencyToken, ModuleClass, AnyProvider } from "./module.js";
+import type { AnyDepArg, TokenValue } from "./injectable.js";
+import type { ConcreteCtor } from "./types.js";
+import { getModuleMetadata } from "./module.js";
+import { getInjectableDeps, isOptionalToken } from "./injectable.js";
 import {
   getOnModuleInitMethodName,
   getOnModuleDestroyMethodName,
@@ -162,7 +160,10 @@ export class Container {
     const record = this.findRecordFromModule(token, this.root);
 
     if (!record) {
-      throw new ProviderNotFoundError(formatToken(token), this.root.moduleClass.name);
+      throw new ProviderNotFoundError(
+        formatToken(token),
+        this.root.moduleClass.name,
+      );
     }
 
     if (!this.instances.has(record)) {
@@ -221,7 +222,10 @@ export class Container {
       const provider = normalizeProvider(rawProvider);
 
       if (module.providers.has(provider.token)) {
-        throw new DuplicateProviderError(formatToken(provider.token), moduleClass.name);
+        throw new DuplicateProviderError(
+          formatToken(provider.token),
+          moduleClass.name,
+        );
       }
 
       module.providers.set(provider.token, {
@@ -237,13 +241,21 @@ export class Container {
       if (typeof exportEntry === "function" && this.modules.has(exportEntry)) {
         // Module re-export: the referenced module must be in our imports list.
         if (!module.imports.some((i) => i.moduleClass === exportEntry)) {
-          throw new InvalidExportError(moduleClass.name, exportEntry.name, "is not imported");
+          throw new InvalidExportError(
+            moduleClass.name,
+            exportEntry.name,
+            "is not imported",
+          );
         }
       } else {
         // Token export: must correspond to a local provider.
         const token = exportEntry as AnyDependencyToken;
         if (!module.providers.has(token)) {
-          throw new InvalidExportError(moduleClass.name, formatToken(token), "has no such provider");
+          throw new InvalidExportError(
+            moduleClass.name,
+            formatToken(token),
+            "has no such provider",
+          );
         }
       }
     }
@@ -266,16 +278,24 @@ export class Container {
     const record = this.findRecordFromModule(token, fromModule);
 
     if (!record) {
-      throw new ProviderNotFoundError(formatToken(token), fromModule.moduleClass.name);
+      throw new ProviderNotFoundError(
+        formatToken(token),
+        fromModule.moduleClass.name,
+      );
     }
 
     return await this.resolveRecord(record);
   }
 
-  private async resolveDepArg(dep: AnyDepArg, fromModule: ModuleInstance): Promise<unknown> {
+  private async resolveDepArg(
+    dep: AnyDepArg,
+    fromModule: ModuleInstance,
+  ): Promise<unknown> {
     if (isOptionalToken(dep)) {
       const record = this.findRecordFromModule(dep.token, fromModule);
-      return record !== undefined ? await this.resolveRecord(record) : undefined;
+      return record !== undefined
+        ? await this.resolveRecord(record)
+        : undefined;
     }
     return this.resolveTokenFromModule(dep, fromModule);
   }
@@ -320,7 +340,10 @@ export class Container {
 
     // Only reachable if moduleExportsToken lied — should never happen.
     /* v8 ignore next 2 */
-    throw new ProviderNotFoundError(formatToken(token), exportedFromModule.moduleClass.name);
+    throw new ProviderNotFoundError(
+      formatToken(token),
+      exportedFromModule.moduleClass.name,
+    );
   }
 
   private moduleExportsToken(
@@ -363,7 +386,10 @@ export class Container {
     }
 
     if (this.resolving.has(record)) {
-      throw new CircularDependencyError(formatToken(record.token), record.module.moduleClass.name);
+      throw new CircularDependencyError(
+        formatToken(record.token),
+        record.module.moduleClass.name,
+      );
     }
 
     const initialization = this.initializeRecord(record);
