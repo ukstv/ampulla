@@ -1,6 +1,6 @@
 {
   "name": "ampulla",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Dependency injection with NestJS ergonomics. Built on TC39 Stage 3 decorators — no reflect-metadata, no experimentalDecorators.",
   "keywords": [
     "dependency-injection",
@@ -16,6 +16,16 @@
     "hono",
     "h3"
   ],
+  "author": "Sergey Ukustov <sergey@ukstv.me>",
+  "license": "MIT",
+  "homepage": "https://github.com/ukstv/ampulla#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ukstv/ampulla.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ukstv/ampulla/issues"
+  },
   "type": "module",
   "exports": {
     ".": {

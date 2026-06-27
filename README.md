@@ -47,16 +47,26 @@ Ampulla is not a framework. It has no HTTP server, no router, no opinion about h
 **Module-scoped visibility.**
 Providers are only visible where they are explicitly exported. No global singleton registry, no accidental cross-module access. The same module mental model as NestJS — imports, providers, exports — without the rest of the framework.
 
+**Zero dependencies.**
+Ampulla has no runtime dependencies. The Hono and H3 adapters reference their respective frameworks as type-only dependencies — the types are used at compile time, the runtime is whatever you already have.
+
 **Testing is a first-class concern.**
 `TestingContainer` composes a module inline for a single test, lets you override any provider, and returns a fully-initialized container in one line. No mock containers, no special test modes, no additional setup.
 
 
 ## Installation
 
+Ampulla is published to both **npm** and **JSR**:
+
 ```sh
+# npm / pnpm / yarn
 npm install ampulla
-# pnpm add ampulla
-# yarn add ampulla
+pnpm add ampulla
+yarn add ampulla
+
+# JSR (Deno, or any package manager that supports JSR)
+deno add jsr:@ukstv/ampulla
+npx jsr add @ukstv/ampulla
 ```
 
 Ampulla requires **TypeScript 5.2+**. No `experimentalDecorators`, no `reflect-metadata`, no Babel transforms needed.
