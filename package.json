@@ -1,0 +1,65 @@
+{
+  "name": "ampulla",
+  "version": "0.0.1",
+  "description": "Dependency injection with NestJS ergonomics. Built on TC39 Stage 3 decorators — no reflect-metadata, no experimentalDecorators.",
+  "keywords": [
+    "dependency-injection",
+    "di",
+    "ioc",
+    "container",
+    "decorators",
+    "tc39",
+    "typescript",
+    "nestjs",
+    "injectable",
+    "module",
+    "hono",
+    "h3"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./tag": {
+      "types": "./dist/tag.d.ts",
+      "import": "./dist/tag.js",
+      "default": "./dist/tag.js"
+    },
+    "./hono": {
+      "types": "./dist/hono/hono.d.ts",
+      "import": "./dist/hono/hono.js",
+      "default": "./dist/hono/hono.js"
+    },
+    "./h3": {
+      "types": "./dist/h3/h3.d.ts",
+      "import": "./dist/h3/h3.js",
+      "default": "./dist/h3/h3.js"
+    }
+  },
+  "files": [
+    "dist",
+    "docs",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-decorators": "^8.0.2",
+    "@rolldown/plugin-babel": "^0.2.3",
+    "@standard-schema/spec": "^1.1.0",
+    "@types/node": "^26.0.0",
+    "@vitest/coverage-v8": "^4.1.9",
+    "h3": "2.0.1-rc.22",
+    "hono": "^4.12.27",
+    "prettier": "^3.8.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9",
+    "zod": "^4.4.3"
+  }
+}
