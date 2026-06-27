@@ -161,21 +161,43 @@ function ctx(): Extractor<H3Event, H3Event> {
 type ExtractorFn = (e: H3Event) => unknown | Promise<unknown>;
 type ExtractorSpec = ExtractorFn | Record<string, ExtractorFn>;
 
+/** Maps an `ExtractorSpec` to the value the decorated method will receive. */
+type ExtractedType<S extends ExtractorSpec> = S extends ExtractorFn
+  ? Awaited<ReturnType<S>>
+  : {
+      readonly [K in keyof S]: S extends Record<K, ExtractorFn>
+        ? Awaited<ReturnType<S[K]>>
+        : never;
+    };
+
 /**
  * Wires a per-method extractor into the route handler.
  *
  * Instead of receiving the raw `H3Event`, the decorated method receives the
  * extracted (and optionally transformed) value produced by `spec`.
  *
- *   @Extract(e => getRouterParam(e, "id"))      // arbitrary fn → single arg
- *   @Extract(query("q"))                        // single extractor → single arg
- *   @Extract({ id: param("id"), q: query("q") }) // Record → single object arg
+ *   @Extract(e => e.context?.params?.id)          // arbitrary fn → single arg
+ *   @Extract(query("q"))                          // single extractor → single arg
+ *   @Extract({ id: param("id"), q: query("q") })  // Record → single object arg
+ *
+ * Applying `@Extract` twice on the same method throws at decoration time —
+ * use a single Record extractor to combine multiple values.
  */
-function Extract(spec: ExtractorSpec): ClassMethodDecoratorFn {
+function Extract<S extends ExtractorSpec>(
+  spec: S,
+): ClassMethodDecoratorFn<
+  unknown,
+  (arg: ExtractedType<S>, ...rest: any[]) => any
+> {
   return function (
     value: Function,
-    _context: ClassMethodDecoratorContext,
+    context: ClassMethodDecoratorContext,
   ): void {
+    if (K_EXTRACT in value) {
+      throw new Error(
+        `@Extract applied twice on "${String(context.name)}" — use a single Record extractor to combine multiple values`,
+      );
+    }
     let extractorFn: ExtractorFn;
     if (typeof spec === "function") {
       extractorFn = spec;

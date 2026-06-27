@@ -823,6 +823,17 @@ describe("h3 controller", () => {
     });
   });
 
+  it("@Extract throws when applied twice on the same method", () => {
+    expect(() => {
+      class Foo {
+        @Extract(query("a"))
+        @Extract(query("b"))
+        @Get()
+        handle(_: string | undefined) {}
+      }
+    }).toThrow('@Extract applied twice on "handle"');
+  });
+
   it("multiple controllers are all registered", async () => {
     @Controller("a")
     @Injectable()
