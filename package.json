@@ -1,6 +1,6 @@
 {
   "name": "ampulla",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Dependency injection with NestJS ergonomics. Built on TC39 Stage 3 decorators — no reflect-metadata, no experimentalDecorators.",
   "keywords": [
     "dependency-injection",
@@ -21,7 +21,7 @@
   "homepage": "https://github.com/ukstv/ampulla#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ukstv/ampulla.git"
+    "url": "git+https://github.com/ukstv/ampulla.git"
   },
   "bugs": {
     "url": "https://github.com/ukstv/ampulla/issues"
@@ -69,8 +69,12 @@
     "h3": ">=2"
   },
   "peerDependenciesMeta": {
-    "hono": { "optional": true },
-    "h3": { "optional": true }
+    "hono": {
+      "optional": true
+    },
+    "h3": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^8.0.2",
