@@ -1,5 +1,5 @@
 import type { H3, H3Event, Middleware as H3Middleware, HTTPMethod } from "h3";
-import type { ClassMethodDecoratorFn } from "../types.js";
+import type { ClassDecoratorFn, ClassMethodDecoratorFn } from "../types.js";
 import type { Container } from "../container.js";
 import type { InjectionToken } from "../injectable.js";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
@@ -251,15 +251,9 @@ type MiddlewareToken = MiddlewareCtor | InjectionToken<MiddlewareClass>;
  * \@Get("resource")
  * getResource(event: H3Event) { ... }
  */
-function UseMiddleware(fn: H3Middleware | MiddlewareToken) {
-  function applyUseMiddleware(
-    value: Function,
-    context: ClassMethodDecoratorContext,
-  ): void;
-  function applyUseMiddleware(
-    value: abstract new (...args: any[]) => any,
-    context: ClassDecoratorContext,
-  ): void;
+function UseMiddleware(
+  fn: H3Middleware | MiddlewareToken,
+): ClassDecoratorFn & ClassMethodDecoratorFn {
   function applyUseMiddleware(value: any, _context: any): void {
     const existing: (H3Middleware | MiddlewareToken)[] =
       (value as any)[K_MIDDLEWARE] ?? [];
@@ -270,7 +264,7 @@ function UseMiddleware(fn: H3Middleware | MiddlewareToken) {
       writable: false,
     });
   }
-  return applyUseMiddleware;
+  return applyUseMiddleware as ClassDecoratorFn & ClassMethodDecoratorFn;
 }
 
 // ---------------------------------------------------------------------------
@@ -286,7 +280,10 @@ function UseMiddleware(fn: H3Middleware | MiddlewareToken) {
  * \@Get(":id")
  * getOne(event: H3Event) { ... }
  */
-function Header(name: string, value: string) {
+function Header(
+  name: string,
+  value: string,
+): ClassDecoratorFn & ClassMethodDecoratorFn {
   return UseMiddleware(async (event, next) => {
     event.res.headers.set(name, value);
     return next();
@@ -297,11 +294,8 @@ function Header(name: string, value: string) {
 // HTTP method decorators
 // ---------------------------------------------------------------------------
 
-function routeDecorator(method: string, path: string) {
-  return function (
-    value: Function,
-    _context: ClassMethodDecoratorContext,
-  ): void {
+function routeDecorator(method: string, path: string): ClassMethodDecoratorFn {
+  return function (value): void {
     Object.defineProperty(value, K_ROUTE, {
       value: { method, path },
       enumerable: false,
@@ -312,23 +306,23 @@ function routeDecorator(method: string, path: string) {
 }
 
 /** Marks a method as the handler for HTTP GET requests at the given path segment, joined with the `@Controller` prefix. */
-function Get(path = "") {
+function Get(path = ""): ClassMethodDecoratorFn {
   return routeDecorator("GET", path);
 }
 /** Marks a method as the handler for HTTP POST requests at the given path segment, joined with the `@Controller` prefix. */
-function Post(path = "") {
+function Post(path = ""): ClassMethodDecoratorFn {
   return routeDecorator("POST", path);
 }
 /** Marks a method as the handler for HTTP PUT requests at the given path segment, joined with the `@Controller` prefix. */
-function Put(path = "") {
+function Put(path = ""): ClassMethodDecoratorFn {
   return routeDecorator("PUT", path);
 }
 /** Marks a method as the handler for HTTP PATCH requests at the given path segment, joined with the `@Controller` prefix. */
-function Patch(path = "") {
+function Patch(path = ""): ClassMethodDecoratorFn {
   return routeDecorator("PATCH", path);
 }
 /** Marks a method as the handler for HTTP DELETE requests at the given path segment, joined with the `@Controller` prefix. */
-function Delete(path = "") {
+function Delete(path = ""): ClassMethodDecoratorFn {
   return routeDecorator("DELETE", path);
 }
 
@@ -341,11 +335,8 @@ function Delete(path = "") {
  *
  * Must be applied after `@Injectable` and the HTTP-method decorators.
  */
-function Controller(prefix = "") {
-  return function (
-    value: abstract new (...args: any[]) => any,
-    _context: ClassDecoratorContext,
-  ): void {
+function Controller(prefix = ""): ClassDecoratorFn {
+  return function (value): void {
     const routes: RouteEntry[] = [];
     for (const key of Object.getOwnPropertyNames(value.prototype)) {
       const fn = value.prototype[key];

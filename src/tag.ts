@@ -1,3 +1,5 @@
+import type { ClassDecoratorFn } from "./types.js";
+
 export type { Tag };
 export { tag, Tagged, getTagsFromClass, allTagged };
 
@@ -43,11 +45,8 @@ function tag<T = object>(label: string | symbol): Tag<T> {
  * A class can carry multiple tags; each tag is independent and queryable
  * separately.
  */
-function Tagged(...tags: readonly Tag<any>[]) {
-  return (
-    value: abstract new (...args: any[]) => any,
-    _context: ClassDecoratorContext,
-  ): void => {
+function Tagged(...tags: readonly Tag<any>[]): ClassDecoratorFn {
+  return function (value): void {
     Object.defineProperty(value, K_TAGS, {
       value: tags,
       enumerable: false,

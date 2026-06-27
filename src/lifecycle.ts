@@ -1,3 +1,5 @@
+import type { ClassDecoratorFn } from "./types.js";
+
 export { OnModuleInit, getOnModuleInitMethodName };
 export { OnModuleDestroy, getOnModuleDestroyMethodName };
 export type { LifecycleMethod };
@@ -47,11 +49,8 @@ function OnModuleInit<const TMethod extends string>(
   context: ClassDecoratorContext<TClass>,
 ) => void;
 
-function OnModuleInit(method: string = "onModuleInit") {
-  return (
-    value: abstract new (...args: any[]) => any,
-    _context: ClassDecoratorContext,
-  ): void => {
+function OnModuleInit(method: string = "onModuleInit"): ClassDecoratorFn {
+  return function (value) {
     Object.defineProperty(value, K_ON_MODULE_INIT, {
       value: method,
       enumerable: false,
@@ -110,11 +109,8 @@ function OnModuleDestroy<const TMethod extends string>(
   context: ClassDecoratorContext<TClass>,
 ) => void;
 
-function OnModuleDestroy(method: string = "onModuleDestroy") {
-  return (
-    value: abstract new (...args: any[]) => any,
-    _context: ClassDecoratorContext,
-  ): void => {
+function OnModuleDestroy(method: string = "onModuleDestroy"): ClassDecoratorFn {
+  return function (value): void {
     Object.defineProperty(value, K_ON_MODULE_DESTROY, {
       value: method,
       enumerable: false,
