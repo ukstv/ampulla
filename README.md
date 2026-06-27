@@ -1,8 +1,18 @@
 # ampulla
 
-**Dependency injection with the ergonomics of NestJS. None of the framework.**
+> Type-safe dependency injection with the ergonomics of NestJS. None of the framework.
 
-Ampulla gives you `@Module`, `@Injectable`, and a type-safe container — the DI model you already know — without pulling in a whole framework, `reflect-metadata` hacks, or TypeScript's legacy `experimentalDecorators` flag. It uses the modern JavaScript decorator syntax that ships in TypeScript 5+ with no extra configuration.
+- **End-to-end type safety.** `container.get(MyService)` returns `MyService`, not `unknown`.
+  Mismatched tokens are compile errors, not runtime crashes.
+- **No `reflect-metadata`.** Uses TC39 Stage 3 decorators — no `experimentalDecorators`,
+  no polyfills, no surprises when TypeScript changes its metadata output.
+- **Zero dependencies.** Built-in [Hono](https://hono.dev) and [H3](https://h3.dev) adapters are type-only — the runtime is whatever you already have.
+- **Tree-shakeable.** HTTP adapters live in separate entry points (`ampulla/hono`, `ampulla/h3`).
+  If you don't import them, they don't exist in your bundle.
+- **Module-scoped visibility.** No global singleton registry. Providers are only visible
+  where explicitly exported — same mental model as NestJS, without the rest of the framework.
+- **Testing built-in.** `TestingContainer` spins up a full container in one line,
+  with any provider overrideable.
 
 ```ts
 import { Container, Module, Injectable, injection, useValue } from "ampulla";
@@ -19,65 +29,60 @@ class UserService {
 }
 
 @Module({
-  providers: [
-    useValue(DB_URL, "https://api.example.com"),
-    UserService,
-  ],
+  providers: [useValue(DB_URL, "https://api.example.com"), UserService],
+  exports: [UserService],
 })
 class AppModule {}
 
 const container = await Container.create(AppModule);
-const users = container.get(UserService);
+const users = container.get(UserService); // typed as UserService
 ```
 
-That's the whole model. Declare dependencies with `@Injectable`, group them into `@Module`, bootstrap with `Container.create`. Everything else follows from these three ideas.
+---
 
+## Table of Contents
 
-## Why ampulla
+- [Install](#install)
+- [Guide](#guide)
+  - [Declaring services](#declaring-services)
+  - [Injection tokens](#injection-tokens)
+  - [Optional dependencies](#optional-dependencies)
+  - [Modules](#modules)
+  - [Providers](#providers)
+  - [Bootstrapping](#bootstrapping)
+  - [Lifecycle hooks](#lifecycle-hooks)
+- [HTTP Adapters](#http-adapters)
+  - [Hono](#hono)
+  - [H3](#h3)
+- [Testing](#testing)
+- [Tags](#tags)
+- [Documentation](#documentation)
 
-**No `reflect-metadata`.**
-Most TypeScript DI libraries — including NestJS — rely on `emitDecoratorMetadata` and a `reflect-metadata` polyfill. This couples your DI wiring to TypeScript's private type-erasure behavior and requires a global side-effecting import. Ampulla uses the modern JavaScript decorator syntax that TypeScript 5+ supports natively, with no extra compiler flags and no polyfills. No surprises when TypeScript changes its metadata output.
+---
 
-**Just the container — and only what you import.**
-Ampulla is not a framework. It has no HTTP server, no router, no opinion about how you structure your application. The Hono and H3 adapters live in separate entry points (`ampulla/hono`, `ampulla/h3`) and are fully tree-shakeable — if you don't import them, they don't exist in your bundle. More importantly, each adapter is written specifically for its framework: the Hono adapter speaks Hono's `Context` and extractors, the H3 adapter speaks H3's `H3Event`. There is no shared abstraction layer forcing them into the same shape — you get the full, native API of whichever framework you chose.
-
-**Explicit dependencies are a feature.**
-`@Injectable(TokenA, TokenB)` is the entire DI contract. TypeScript verifies that the constructor matches at compile time. There is no inference from constructor parameter types (which are erased at runtime anyway), no metadata scanning, no runtime surprises. What the decorator says is what the container injects.
-
-**Module-scoped visibility.**
-Providers are only visible where they are explicitly exported. No global singleton registry, no accidental cross-module access. The same module mental model as NestJS — imports, providers, exports — without the rest of the framework.
-
-**Zero dependencies.**
-Ampulla has no runtime dependencies. The Hono and H3 adapters reference their respective frameworks as type-only dependencies — the types are used at compile time, the runtime is whatever you already have.
-
-**Testing is a first-class concern.**
-`TestingContainer` composes a module inline for a single test, lets you override any provider, and returns a fully-initialized container in one line. No mock containers, no special test modes, no additional setup.
-
-
-## Installation
+## Install
 
 ```sh
-npm install ampulla # for NPM
-pnpm add ampulla # for PNPM
+npm install ampulla
 ```
 
-Ampulla requires **TypeScript 5.2+**. No `experimentalDecorators`, no `reflect-metadata`, no Babel transforms needed.
+Requires **TypeScript 5.2+** with no additional compiler flags.
 
+---
 
-## Five-minute tour
+## Guide
 
-### 1. Declare your services
+### Declaring services
 
-Use `@Injectable` to tell the container what a class needs. The arguments to `@Injectable` are the tokens — class constructors or opaque `InjectionToken` values — that the container will resolve and pass to the constructor.
+`@Injectable` declares what a class needs. Its arguments are the tokens the container
+resolves and passes to the constructor — in order.
 
 ```ts
 import { Injectable } from "ampulla";
 
 @Injectable()
 class Logger {
-  log(msg: string) {
-    console.log(`[${new Date().toISOString()}] ${msg}`);
-  }
+  log(msg: string) { console.log(`[${new Date().toISOString()}] ${msg}`); }
 }
 
 @Injectable(Logger)
@@ -86,105 +91,269 @@ class UserService {
 
   create(name: string) {
     this.logger.log(`Creating user: ${name}`);
-    // ...
   }
 }
 ```
 
-The TypeScript compiler verifies that `@Injectable(Logger)` matches the constructor signature. Forget a token, or pass the wrong type, and it's a compile error — not a runtime surprise.
+TypeScript verifies at compile time that `@Injectable(Logger)` matches the constructor
+signature. Forget a token, pass the wrong type, or misorder them — it's a type error.
 
-### 2. Create an injection token for non-class values
+### Injection tokens
 
-Classes double as their own tokens. For everything else — strings, numbers, config objects, interfaces — create an explicit token with `injection<T>()`.
+Classes double as their own tokens. For everything else — strings, numbers, config objects,
+interfaces — create an explicit typed token with `injection<T>()`.
 
 ```ts
 import { injection } from "ampulla";
 
-export const CONFIG = injection<AppConfig>("CONFIG");
+export const DB_URL = injection<string>("DB_URL");
+export const CONFIG  = injection<AppConfig>("CONFIG");
 ```
 
-The string `"CONFIG"` is just a human-readable label for error messages. Token identity is determined by object reference, not by the string. Always `export` your tokens and `import` them wherever they are used — never recreate them with another `injection()` call.
+The string label is only used in error messages. Token identity is **object reference** —
+always export and import the same constant, never recreate it.
 
-### 3. Group providers into modules
+### Optional dependencies
 
-A `@Module` declares which providers it owns and which it exposes to the outside world.
+Wrap a token with `optional()` to inject `undefined` when the provider is absent
+instead of throwing.
+
+```ts
+import { Injectable, injection, optional } from "ampulla";
+
+const CACHE = injection<Cache>("CACHE");
+
+@Injectable(DB_URL, optional(CACHE))
+class UserService {
+  constructor(private url: string, private cache?: Cache) {}
+}
+```
+
+### Modules
+
+A `@Module` declares which providers it owns (`providers`) and which it exposes
+to importers (`exports`).
 
 ```ts
 import { Module, useValue } from "ampulla";
-import { CONFIG } from "./tokens.js";
-import { UserService } from "./user.service.js";
-import { Logger } from "./logger.js";
 
 @Module({
-  providers: [
-    useValue(CONFIG, { maxUsers: 100 }),
-    Logger,
-    UserService,
-  ],
+  providers: [useValue(DB_URL, "postgres://localhost/app"), Logger, UserService],
   exports: [UserService],
 })
-export class UserModule {}
+class UserModule {}
 ```
 
-`exports` controls visibility. A module that imports `UserModule` can only see `UserService` — not `Logger` or `CONFIG`. This is how you build clean boundaries between parts of your application.
-
-### 4. Compose modules into a root
+Modules compose — importers can only see what is explicitly exported:
 
 ```ts
-import { Module } from "ampulla";
-import { UserModule } from "./user.module.js";
-import { DatabaseModule } from "./database.module.js";
-
 @Module({
   imports: [DatabaseModule, UserModule],
+  providers: [AppService],
 })
 class AppModule {}
 ```
 
-Modules can be nested arbitrarily deep. The container resolves the full import graph and deduplicates shared modules automatically — if `UserModule` and `PostModule` both import `DatabaseModule`, a single `DatabaseService` instance is shared between them.
+The container deduplicates shared modules automatically. If `UserModule` and `PostModule`
+both import `DatabaseModule`, a single `DatabaseService` instance is shared between them.
 
-### 5. Bootstrap and use
+### Providers
+
+Three provider shapes beyond bare class constructors:
 
 ```ts
-import { Container } from "ampulla";
+import { useValue, useClass, useFactory } from "ampulla";
+
+useValue(PORT, 3000)                                      // pre-existing value
+useClass(LoggerDep, ConsoleLogger)                        // concrete under abstract token
+useFactory(DB, [DB_URL], async url => new Pool(url))      // async factory
+```
+
+Factory providers may return a `Promise` — the container awaits all factories concurrently
+before making any value available.
+
+### Bootstrapping — sync and async
+
+`Container.create` awaits every async factory before resolving. By the time you
+have a container, every provider is fully initialized and ready — no deferred
+initialization, no "is it ready yet?" checks.
+
+```ts
+import { Container, Module, useFactory, injection } from "ampulla";
+
+const DB_URL = injection<string>("DB_URL");
+const DB = injection<Pool>("DB");
+
+// Async factory: the container waits for the connection before proceeding.
+// Independent async factories run concurrently.
+const dbProvider = useFactory(DB, [DB_URL], async (url) => {
+  const pool = new Pool(url);
+  await pool.connect();   // fully connected by the time any consumer gets it
+  return pool;
+});
+
+@Module({ providers: [useValue(DB_URL, "postgres://localhost/app"), dbProvider, UserService] })
+class AppModule {}
 
 const container = await Container.create(AppModule);
 
-const userService = container.get(UserService);
-await userService.create("Alice");
+// At this point every provider — including the async DB pool — is ready.
+const users = container.get(UserService); // synchronous, fully typed
 ```
 
-`Container.create` is async because providers can have async factory functions. Everything is initialized before the promise resolves. `container.get` is synchronous after that.
+### Lifecycle hooks
 
-### 6. Clean up
+Async factories initialize a provider *in isolation*. Lifecycle hooks fire *after every
+provider in the graph is ready*, which is the right place for cross-service coordination.
+
+- `@OnModuleInit` — runs after all providers are instantiated, in dependency order.
+  Use it to warm caches from a ready DB, subscribe to another service's events,
+  register with a central bus, or start scheduled jobs once all dependencies are live.
+- `@OnModuleDestroy` — runs on `dispose()`, in reverse order (dependents first, deps last).
+  Use it to flush queues before closing connections, finish in-flight work, or
+  deregister from service discovery.
+
+**Rule of thumb:** factories own *"am I ready"*, lifecycle hooks own *"now that everyone
+else is ready, coordinate"*.
 
 ```ts
-await container.dispose();
+import { Injectable, OnModuleInit, OnModuleDestroy } from "ampulla";
 
-// Or use the `await using` syntax (requires TypeScript 5.2+):
+@OnModuleInit()
+@OnModuleDestroy()
+@Injectable(DB, EventBus)
+class UserRepository {
+  constructor(private db: Pool, private bus: EventBus) {}
+
+  async onModuleInit() {
+    // DB and EventBus are both fully ready here — safe to query and subscribe
+    const count = await this.db.query("SELECT COUNT(*) FROM users");
+    this.bus.emit("users:ready", { count });
+  }
+
+  async onModuleDestroy() {
+    // EventBus is still up — dependents are torn down first
+    this.bus.emit("users:shutdown");
+  }
+}
+```
+
+Use `await using` for automatic cleanup (TypeScript 5.2+):
+
+```ts
 await using container = await Container.create(AppModule);
 // container.dispose() is called automatically at end of scope
 ```
 
+---
 
-## What's in the box
+## HTTP Adapters
 
-| Package | Contents |
-|---|---|
-| `ampulla` | `Container`, `Module`, `Injectable`, `injection`, `optional`, `useClass`, `useValue`, `useFactory`, `OnModuleInit`, `OnModuleDestroy` |
-| `ampulla/tag` | `tag`, `Tagged`, `allTagged` |
-| `ampulla/hono` | `Controller`, `Get/Post/Put/Patch/Delete`, `Extract`, `UseMiddleware`, `Header`, `registerControllers`, all extractors |
-| `ampulla/h3` | Same API, adapted for H3 |
-| `ampulla/testing` | `TestingContainer` |
+HTTP is the most common entry point, so ampulla ships adapters for [Hono](https://hono.dev)
+and [H3](https://h3.dev) out of the box. But the container is just a container — nothing
+stops you from wiring it to WebSockets, message queues, cron jobs, or any other input
+source. `container.get(MyService)` works the same regardless of what calls it.
 
+### Hono
+
+```ts
+import { Hono } from "hono";
+import { Controller, Get, Extract, query, registerControllers } from "ampulla/hono";
+
+@Controller("users")
+@Injectable()
+class UserController {
+  @Extract({ name: query("name") })
+  @Get("search")
+  search(params: { name: string | undefined }) {
+    return new Response(params.name ?? "");
+  }
+}
+
+@Module({ providers: [UserController] })
+class AppModule {}
+
+const app = new Hono();
+const container = await Container.create(AppModule);
+registerControllers(app, container);
+export default app;
+```
+
+See [Hono adapter docs](./docs/hono.md) for the full extractor and middleware API.
+
+### H3
+
+Controllers, extractors, and middleware — same decorator API, adapted for H3's `H3Event`:
+
+```ts
+import { H3 } from "h3";
+import { Controller, Get, Extract, query, registerControllers } from "ampulla/h3";
+```
+
+See [H3 adapter docs](./docs/h3.md).
+
+---
+
+## Testing
+
+`TestingContainer` creates a one-off module inline — no class declarations needed:
+
+```ts
+import { TestingContainer } from "ampulla/testing";
+import { useValue } from "ampulla";
+
+const svc = await TestingContainer.use(UserService, {
+  providers: [useValue(DB_URL, "postgres://localhost/test"), UserService],
+});
+
+expect(svc.findAll()).toEqual([]);
+```
+
+For tests that need to inspect multiple providers:
+
+```ts
+const container = await TestingContainer.fromModule({
+  providers: [useValue(DB_URL, "postgres://test"), Logger, UserService],
+});
+
+const logger = container.get(Logger);
+const users  = container.get(UserService);
+```
+
+---
+
+## Tags
+
+`container.get` retrieves a single known provider by token. But some patterns need
+a collection — all event handlers, all controllers, all plugins — where the consumer
+shouldn't have to know what's registered. Tags solve this: mark providers with a shared
+role, then retrieve every instance that carries it in one call, without any direct
+dependency between them. This is exactly the mechanism `registerControllers` uses
+internally — it collects all tagged controller instances and mounts them onto the
+Hono or H3 app.
+
+```ts
+import { tag, Tagged, allTagged } from "ampulla/tag";
+
+const HANDLER = tag<{ handle(): void }>("handler");
+
+@Tagged(HANDLER)
+@Injectable()
+class FooHandler { handle() { /* ... */ } }
+
+const handlers = allTagged(container, HANDLER); // FooHandler[]
+handlers.forEach(h => h.handle());
+```
+
+---
 
 ## Documentation
 
-- [Core Concepts](./docs/core-concepts.md) — `@Injectable`, `injection`, `@Module`, `Container`: how they work and how they relate to each other
-- [Providers](./docs/providers.md) — `useClass`, `useValue`, `useFactory`: all three provider kinds and when to reach for each
-- [Lifecycle Hooks](./docs/lifecycle.md) — `@OnModuleInit`, `@OnModuleDestroy`: initialization order, teardown, `await using`
-- [Tags](./docs/tags.md) — `tag`, `@Tagged`, `allTagged`: grouping providers by role and querying them as a collection
-- [Testing](./docs/testing.md) — `TestingContainer`: composing modules for tests, overriding providers, keeping tests fast
-- [Hono Adapter](./docs/hono.md) — `@Controller`, `@Get`, `@Extract`, `@UseMiddleware`, `registerControllers`: full HTTP controller layer for Hono
-- [H3 Adapter](./docs/h3.md) — same API, adapted for H3's `H3Event` and `H3Middleware`
-- [Comparison](./docs/comparison.md) — how ampulla compares to NestJS, TypeDI, TSyringe, and InversifyJS
+- [Core Concepts](./docs/core-concepts.md) — `@Injectable`, `injection`, `@Module`, `Container`
+- [Providers](./docs/providers.md) — `useClass`, `useValue`, `useFactory`
+- [Lifecycle Hooks](./docs/lifecycle.md) — `@OnModuleInit`, `@OnModuleDestroy`, `await using`
+- [Tags](./docs/tags.md) — `tag`, `@Tagged`, `allTagged`
+- [Testing](./docs/testing.md) — `TestingContainer`
+- [Hono Adapter](./docs/hono.md) — controllers, extractors, middleware for Hono
+- [H3 Adapter](./docs/h3.md) — same API for H3
+- [Comparison](./docs/comparison.md) — vs NestJS, TypeDI, TSyringe, InversifyJS
