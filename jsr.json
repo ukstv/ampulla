@@ -2,6 +2,7 @@
   "name": "@ukstv/ampulla",
   "version": "0.0.2",
   "unstable": ["sloppy-imports"],
+  "license": "MIT",
   "compilerOptions": {
     "lib": ["esnext", "dom", "dom.iterable"]
   },
