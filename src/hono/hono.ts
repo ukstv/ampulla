@@ -207,6 +207,15 @@ type ExtractorFn = (c: Context) => unknown | Promise<unknown>;
 
 type ExtractorSpec = ExtractorFn | Record<string, ExtractorFn>;
 
+/** Maps an `ExtractorSpec` to the value the decorated method will receive. */
+type ExtractedType<S extends ExtractorSpec> = S extends ExtractorFn
+  ? Awaited<ReturnType<S>>
+  : {
+      readonly [K in keyof S]: S extends Record<K, ExtractorFn>
+        ? Awaited<ReturnType<S[K]>>
+        : never;
+    };
+
 /**
  * Wires a per-method extractor into the route handler.
  *
@@ -215,22 +224,32 @@ type ExtractorSpec = ExtractorFn | Record<string, ExtractorFn>;
  *
  * Three call forms are accepted:
  *
- *   @Extract(c => c.req.param("id"))         // arbitrary fn → single arg
- *   @Extract(query("q"))                     // single extractor → single arg
- *   @Extract({ id: param("id"), q: query("q") }) // Record → single object arg
+ *   @Extract(c => c.req.param("id"))              // arbitrary fn → single arg
+ *   @Extract(query("q"))                          // single extractor → single arg
+ *   @Extract({ id: param("id"), q: query("q") })  // Record → single object arg
  *
  * `registerControllers` detects `K_EXTRACT` on the method and awaits the
  * extractor before calling the handler; methods without `@Extract` continue
  * to receive the raw `Context` as before.
  *
- * NOTE: stacking multiple `@Extract` on the same method is not yet
- * supported — composition order is unresolved. Revisit.
+ * Applying `@Extract` twice on the same method throws at decoration time —
+ * use a single Record extractor to combine multiple values.
  */
-function Extract(spec: ExtractorSpec): ClassMethodDecoratorFn {
+function Extract<S extends ExtractorSpec>(
+  spec: S,
+): ClassMethodDecoratorFn<
+  unknown,
+  (arg: ExtractedType<S>, ...rest: any[]) => any
+> {
   return function (
     value: Function,
-    _context: ClassMethodDecoratorContext,
+    context: ClassMethodDecoratorContext,
   ): void {
+    if (K_EXTRACT in value) {
+      throw new Error(
+        `@Extract applied twice on "${String(context.name)}" — use a single Record extractor to combine multiple values`,
+      );
+    }
     let extractorFn: ExtractorFn;
     if (typeof spec === "function") {
       extractorFn = spec;

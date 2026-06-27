@@ -882,10 +882,10 @@ describe("hono controller", () => {
       @Controller("form")
       @Injectable()
       class FormController {
-        @Extract(parseBody())
         @Post()
-        handle(body: Record<string, string>) {
-          return new Response(body.name);
+        @Extract(parseBody())
+        handle(body: Record<string, string | File>) {
+          return new Response(body.name as string);
         }
       }
       const app = new Hono();
@@ -1018,6 +1018,17 @@ describe("hono controller", () => {
       });
       expect(await res.text()).toBe("secret");
     });
+  });
+
+  it("@Extract throws when applied twice on the same method", () => {
+    expect(() => {
+      class Foo {
+        @Extract(query("a"))
+        @Extract(query("b"))
+        @Get()
+        handle(_: string | undefined) {}
+      }
+    }).toThrow('@Extract applied twice on "handle"');
   });
 
   it("multiple controllers are all registered", async () => {
