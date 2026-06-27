@@ -1,6 +1,5 @@
 {
   "name": "@ukstv/ampulla",
-  "version": "0.0.2",
   "exports": {
     ".": "./src/index.ts",
     "./tag": "./src/tag.ts",
