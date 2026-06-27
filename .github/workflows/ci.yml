@@ -41,4 +41,4 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
-      - run: npm stage publish --provenance --access public
+      - run: npm publish --provenance --access public
