@@ -27,10 +27,11 @@
  * @module
  */
 export { Container } from "./container.js";
-export { Module, useClass, useValue, useFactory } from "./module.js";
-export { Injectable, injection, optional } from "./injectable.js";
-export type { InjectionToken, DependencyToken, OptionalToken } from "./injectable.js";
-export { OnModuleInit, OnModuleDestroy } from "./lifecycle.js";
+export * from "./module.js";
+export * from "./injectable.js";
+export * from "./lifecycle.js";
+export * from "./tag.js";
+export * from "./types.js";
 export {
   NotAModuleError,
   InvalidProviderError,

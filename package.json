@@ -1,6 +1,6 @@
 {
   "name": "ampulla",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Dependency injection with NestJS ergonomics. Built on TC39 Stage 3 decorators — no reflect-metadata, no experimentalDecorators.",
   "keywords": [
     "dependency-injection",
